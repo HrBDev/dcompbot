@@ -1,127 +1,67 @@
-from mysql.connector import connection
+# coding: utf-8
+from sqlalchemy import create_engine, asc
+from sqlalchemy.orm import Session
 
-cnx = connection.MySQLConnection(user=<Database,
-                                 password=<Database Password>,
-                                 host=<Host IP>,
-                                 database=<Database name>,
-                                 charset='utf8mb4')
+from model import TblSection, TblOption, TblContent, TblContentFill
 
-def fetch_all(query):
-    cursor = cnx.cursor()
-    cursor.execute(query)
-    result = cursor.fetchall()
-    cursor.close()
-    if result is None:
-        return False
-    else:
-        return result
+# connection string
+engine = create_engine('mysql+mysqldb://<DB_USER>:<DB_PASSWD>@<DB_IO>/<DB_NAME>', pool_recycle=3600)
+# create SqlAlchemy Session
+session = Session(engine)
 
 
 def get_sections():
-    query = """SELECT *
-    FROM tbl_section
-    WHERE active = TRUE
-    ORDER BY position ASC;"""
-    return fetch_all(query)
+    return session.query(TblSection.id_section, TblSection.name). \
+        order_by(asc(TblSection.position)). \
+        filter(TblSection.active).all()
 
 
-def get_section_name():
-    query = """SELECT name
-    FROM tbl_section
-    WHERE active = TRUE
-    ORDER BY position ASC;"""
-    return fetch_all(query)
-
-
-def get_id_section(id_section):
-    query = """SELECT *
-    FROM tbl_section
-    WHERE active = TRUE
-    AND id_section = {id_section}
-    ORDER BY position ASC;""".format(id_section=id_section)
-    return fetch_all(query)
-
-
-def get_id(id_section, section):
-    # query = "SELECT concat(id_section,0x2D,tbl_section.name) AS getId" + " FROM tbl_section" + " WHERE active = TRUE" + " AND tbl_section.name = \"" + section + "\" AND id_section = " + id_section
-    query = """SELECT concat(id_section,0x2D,tbl_section.name) AS getId
-    FROM tbl_section
-    WHERE active = TRUE 
-    AND tbl_section.name = \"{section} \" 
-    AND id_section = {id_section}""".format(id_section=id_section, section=section)
-    result = fetch_all(query)
-    return result is not None
-
-
-def get_id_option(id_option, id_field, option):
-    query = """SELECT concat(id_option,0x2D,id_field,0x2D,tbl_option.name) AS getId
-    FROM tbl_option
-    WHERE active = TRUE
-    AND id_option = {id_option}
-    AND tbl_option.name = \"{option} \"
-    AND id_field = {id_field}""".format(id_option=id_option, id_field=id_field, option=option)
-    result = fetch_all(query)
-    return result is not None
-
-
-def get_id_content(id_content, id_option, content):
-    query = """SELECT concat("1",0x2D,id_content,0x2D,id_option,0x2D,tbl_content.name) AS getId
-    FROM tbl_content
-    WHERE active = TRUE
-    AND id_option = {id_option}
-    AND tbl_content.name = \"{content} \"
-    AND id_content = {id_content}""".format(id_option=id_option, id_content=id_content, content=content)
-    result = fetch_all(query)
-    return result is not None
-
-
-def get_fields(id_section):
-    query = """SELECT *
-    FROM tbl_field
-    WHERE id_section = {} AND active = TRUE
-    ORDER BY position ASC;""".format(id_section)
-    return fetch_all(query)
-
-
-def get_options(id_field):
-    query = """SELECT *
-    FROM tbl_option
-    WHERE id_field = {} AND active = TRUE
-    ORDER BY position ASC;""".format(id_field)
-    return fetch_all(query)
+def get_options(id_section):
+    return session.query(TblOption.id_option, TblOption.id_section, TblOption.name, TblOption.position) \
+        .filter(TblOption.active, TblOption.id_section == id_section) \
+        .order_by(asc(TblOption.position)).all()
 
 
 def get_content(id_option):
-    query = """SELECT *
-    FROM tbl_content
-    WHERE id_option = {} AND active = TRUE
-    ORDER BY position ASC;""".format(id_option)
-    return fetch_all(query)
+    return session.query(TblContent.id_content, TblContent.id_option, TblContent.name) \
+        .filter(TblContent.active, TblContent.id_option == id_option) \
+        .order_by(asc(TblContent.position)).all()
 
 
 def get_content_filled(id_content):
-    query = """SELECT *
-    FROM tbl_content_fill
-    WHERE id_content = {} AND active = TRUE
-    ORDER BY position ASC;""".format(id_content)
-    return fetch_all(query)
+    return session.query(TblContentFill.type, TblContentFill.textOrfile) \
+        .filter(TblContentFill.active, TblContentFill.id_content == id_content) \
+        .order_by(asc(TblContentFill.position)).all()
 
 
-def get_content_filled_msg(id_content):
-    query = """SELECT
-  concat(tbl_section.name, 0x202d2d3e20, tbl_option.name, 0x202d2d3e20, tbl_content.name) AS name
-FROM tbl_section
-  INNER JOIN tbl_field ON tbl_section.id_section = tbl_field.id_section
-  INNER JOIN tbl_option ON tbl_field.id_field = tbl_option.id_field
-  INNER JOIN tbl_content ON tbl_option.id_option = tbl_content.id_option
-WHERE tbl_content.id_content = {};""".format(id_content)
-    return fetch_all(query)
+def get_path_content(id_option):
+    option = _get_option_name(id_option)
+    section = _get_section_name(option[0])
+    path = section[0] + " -> " + option[1]
+    return path
 
-def get_content_msg(id_option):
-    query = """SELECT
-  concat(tbl_section.name, 0x202d2d3e20, tbl_option.name, " ، درچه زمینه ای سوال دارید؟") AS name
-FROM tbl_section
-  INNER JOIN tbl_field ON tbl_section.id_section = tbl_field.id_section
-  INNER JOIN tbl_option ON tbl_field.id_field = tbl_option.id_field
-WHERE tbl_option.id_option =  {};""".format(id_option)
-    return fetch_all(query)
+
+def get_path_content_filled(id_content):
+    content = _get_content_name(id_content)
+    option = _get_option_name(content[0])
+    section = _get_section_name(option[0])
+    path = section[0] + " -> " + option[1] + " -> " + content[1]
+    return path
+
+
+def _get_content_name(id_content):
+    return session.query(TblContent.id_option, TblContent.name) \
+        .filter(TblContent.active, TblContent.id_content == id_content) \
+        .first()
+
+
+def _get_option_name(id_option):
+    return session.query(TblOption.id_section, TblOption.name) \
+        .filter(TblOption.active, TblOption.id_option == id_option) \
+        .first()
+
+
+def _get_section_name(id_section):
+    return session.query(TblSection.name) \
+        .filter(TblSection.active, TblSection.id_section == id_section) \
+        .first()
