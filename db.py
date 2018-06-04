@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from model import Section, Option, Content, ContentFill
 
 # connection string
-engine = create_engine('mysql+mysqldb://<DB_USER>:<DB_PASSWD>@<DB_IO>/<DB_NAME>', pool_recycle=3600)
+engine = create_engine('mysql+mysqldb://<DB_USER>:<DB_PASSWD>@<DB_IP>/<DB_NAME>', pool_recycle=3600)
 # create SqlAlchemy Session
 session = Session(engine)
 
