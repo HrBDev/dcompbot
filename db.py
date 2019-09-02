@@ -12,7 +12,7 @@ dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 # connection string
-engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'.format(
+engine = create_engine('mysql+mysqldb://{}:{}@{}/{}?charset=utf8mb4'.format(
     os.getenv('DB_USER'), os.getenv('DB_PASSWD'), os.getenv('DB_IP'), os.getenv('DB_NAME')
 ), pool_recycle=3600)
 # create SqlAlchemy Session
