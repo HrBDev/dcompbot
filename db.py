@@ -1,11 +1,20 @@
 # coding: utf-8
+import os
+from os.path import join, dirname
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import Session
 
 from model import Section, Option, Content, ContentFill
 
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+
 # connection string
-engine = create_engine('mysql+mysqldb://<DB_USER>:<DB_PASSWD>@<DB_IP>/<DB_NAME>', pool_recycle=3600)
+engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'.format(
+    os.getenv('DB_USER'), os.getenv('DB_PASSWD'), os.getenv('DB_IP'), os.getenv('DB_NAME')
+), pool_recycle=3600)
 # create SqlAlchemy Session
 session = Session(engine)
 
