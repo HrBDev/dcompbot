@@ -1,5 +1,6 @@
 # coding: utf-8
 import logging
+import os
 import time
 
 import telebot
@@ -7,7 +8,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 import db
 
-token = "<token>"
+token = os.getenv('TOKEN')
 bot = telebot.TeleBot(token)
 
 logger = telebot.logger
