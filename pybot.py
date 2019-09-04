@@ -164,7 +164,8 @@ def show_content_filled(call):
             bot.send_chat_action(chat_id, 'upload_document')
             time.sleep(1)
             try:
-                file = open(result[1], 'rb')
+                path_prefix = os.getenv('FILE_PATH_PREFIX')
+                file = open(path_prefix + result[1], 'rb')
                 ext = result[1].split(".")[1]
                 if ext in ["png", "jpeg", "jpg", "PNG", "JPEG", "JPG"]:
                     bot.send_photo(chat_id, file)
