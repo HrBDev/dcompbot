@@ -15,32 +15,46 @@ load_dotenv(dotenv_path)
 engine = create_engine('mysql+mysqldb://{}:{}@{}/{}?charset=utf8mb4'.format(
     os.getenv('DB_USER'), os.getenv('DB_PASSWD'), os.getenv('DB_IP'), os.getenv('DB_NAME')
 ), pool_recycle=3600, pool_use_lifo=True, pool_pre_ping=True)
-# create SqlAlchemy Session
-session = Session(engine)
 
 
 def get_sections():
-    return session.query(Section.id_section, Section.name). \
-        order_by(asc(Section.position)). \
-        filter(Section.active).all()
+    session = Session(engine)
+    try:
+        return session.query(Section.id_section, Section.name). \
+            order_by(asc(Section.position)). \
+            filter(Section.active).all()
+    finally:
+        session.close()
 
 
 def get_options(id_section):
-    return session.query(Option.id_option, Option.id_section, Option.name, Option.position) \
-        .filter(Option.active, Option.id_section == id_section) \
-        .order_by(asc(Option.position)).all()
+    session = Session(engine)
+    try:
+        return session.query(Option.id_option, Option.id_section, Option.name, Option.position) \
+            .filter(Option.active, Option.id_section == id_section) \
+            .order_by(asc(Option.position)).all()
+    finally:
+        session.close()
 
 
 def get_content(id_option):
-    return session.query(Content.id_content, Content.id_option, Content.name) \
-        .filter(Content.active, Content.id_option == id_option) \
-        .order_by(asc(Content.position)).all()
+    session = Session(engine)
+    try:
+        return session.query(Content.id_content, Content.id_option, Content.name) \
+            .filter(Content.active, Content.id_option == id_option) \
+            .order_by(asc(Content.position)).all()
+    finally:
+        session.close()
 
 
 def get_content_filled(id_content):
-    return session.query(ContentFill.type, ContentFill.textOrfile) \
-        .filter(ContentFill.active, ContentFill.id_content == id_content) \
-        .order_by(asc(ContentFill.position)).all()
+    session = Session(engine)
+    try:
+        return session.query(ContentFill.type, ContentFill.textOrfile) \
+            .filter(ContentFill.active, ContentFill.id_content == id_content) \
+            .order_by(asc(ContentFill.position)).all()
+    finally:
+        session.close()
 
 
 def get_path_content(id_option):
@@ -59,18 +73,30 @@ def get_path_content_filled(id_content):
 
 
 def _get_content_name(id_content):
-    return session.query(Content.id_option, Content.name) \
-        .filter(Content.active, Content.id_content == id_content) \
-        .first()
+    session = Session(engine)
+    try:
+        return session.query(Content.id_option, Content.name) \
+            .filter(Content.active, Content.id_content == id_content) \
+            .first()
+    finally:
+        session.close()
 
 
 def _get_option_name(id_option):
-    return session.query(Option.id_section, Option.name) \
-        .filter(Option.active, Option.id_option == id_option) \
-        .first()
+    session = Session(engine)
+    try:
+        return session.query(Option.id_section, Option.name) \
+            .filter(Option.active, Option.id_option == id_option) \
+            .first()
+    finally:
+        session.close()
 
 
 def _get_section_name(id_section):
-    return session.query(Section.name) \
-        .filter(Section.active, Section.id_section == id_section) \
-        .first()
+    session = Session(engine)
+    try:
+        return session.query(Section.name) \
+            .filter(Section.active, Section.id_section == id_section) \
+            .first()
+    finally:
+        session.close()
